@@ -2,6 +2,7 @@
 
 const db = require("../db");
 const { faker } = require("@faker-js/faker");
+const { prisma } = require("../common");
 
 async function seed() {
   console.log("Seeding the database.");
@@ -10,41 +11,56 @@ async function seed() {
     await db.query("DROP TABLE IF EXISTS student, instructor;");
 
     // Recreate the tables
-    await db.query(`
-      CREATE TABLE instructor (
-        id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
-      );
-      CREATE TABLE student (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        cohort TEXT NOT NULL,
-        instructorId INTEGER NOT NULL REFERENCES instructor(id) ON DELETE CASCADE
-      );
-    `);
+    // await db.query(`
+    //   CREATE TABLE instructor (
+    //     id SERIAL PRIMARY KEY,
+    //     username TEXT UNIQUE NOT NULL,
+    //     password TEXT NOT NULL
+    //   );
+    //   CREATE TABLE student (
+    //     id SERIAL PRIMARY KEY,
+    //     name TEXT NOT NULL,
+    //     cohort TEXT NOT NULL,
+    //     instructorId INTEGER NOT NULL REFERENCES instructor(id) ON DELETE CASCADE
+    //   );
+    // `);
 
     // Add 5 instructors.
     await Promise.all(
-      [...Array(5)].map(() =>
-        db.query(
-          `INSERT INTO instructor (username, password) VALUES ($1, $2);`,
-          [faker.internet.userName(), faker.internet.password()]
-        )
+      [...Array(5)].map(
+        () =>
+          prisma.instructor.createMany({
+            data: {
+              username: faker.internet.userName(),
+              password: faker.internet.password(),
+            },
+          })
+        // db.query(
+        //   `INSERT INTO instructor (username, password) VALUES ($1, $2);`,
+        //   [faker.internet.userName(), faker.internet.password()]
+        // )
       )
     );
 
     // Add 4 students for each instructor.
     await Promise.all(
-      [...Array(20)].map((_, i) =>
-        db.query(
-          `INSERT INTO student (name, cohort, instructorId) VALUES ($1, $2, $3);`,
-          [
-            faker.person.fullName(),
-            faker.number.int({ min: 2000, max: 3000 }),
-            (i % 5) + 1,
-          ]
-        )
+      [...Array(20)].map(
+        (_, i) =>
+          prisma.student.createMany({
+            data: {
+              name: faker.person.fullName(),
+              cohort: faker.number.int({ min: 2000, max: 3000 }),
+              instructorId: (i % 5) + 1,
+            },
+          })
+        // db.query(
+        //   `INSERT INTO student (name, cohort, instructorId) VALUES ($1, $2, $3);`,
+        //   [
+        //     faker.person.fullName(),
+        //     faker.number.int({ min: 2000, max: 3000 }),
+        //     (i % 5) + 1,
+        //   ]
+        // )
       )
     );
 
