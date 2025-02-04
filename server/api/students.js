@@ -79,10 +79,12 @@ router.put("/:id", async (req, res, next) => {
   try {
     const student = await prisma.student.update({
       where: {
-        name: req.body.name,
-        cohort: parseInt(req.body.cohort),
         id: req.params.id,
         instructorId: req.user.id,
+      },
+      data: {
+        name: req.body.name,
+        cohort: parseInt(req.body.cohort),
       },
     });
     // const {
